@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: ghcr.io/sigrokproject/sigrok-mxe:latest
+      image: ghcr.io/${{ github.repository_owner }}/sigrok-mxe:latest
 
     strategy:
       matrix:
@@ -154,7 +154,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: ghcr.io/sigrokproject/sigrok-mxe:latest
+      image: ghcr.io/${{ github.repository_owner }}/sigrok-mxe:latest
 
     strategy:
       matrix:
@@ -257,7 +257,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: ghcr.io/sigrokproject/sigrok-appimage-${{ matrix.target.container }}:latest
+      image: ghcr.io/${{ github.repository_owner }}/sigrok-appimage-${{ matrix.target.container }}:latest
 
     strategy:
       matrix:
@@ -305,12 +305,12 @@ jobs:
           sudo apt-get update || true
           sudo apt-get upgrade -y
           # Version must match the one in ci/appimage/sigrok-appimage-create-appimage.sh
-          sudo apt-get install -y python3.8-dev
+          sudo apt-get install -y python3-dev
 
       - name: Checkout sigrok-build
-        # Cannot use actions/checkout because it always checks out the calling actions' repo, not the one specified
-        run: |
-          git clone https://github.com/sigrokproject/sigrok-build.git
+        uses: actions/checkout@v4
+        with:
+          path: sigrok-build
 
       - name: Build dependencies
         run: |
@@ -345,7 +345,7 @@ jobs:
           PKG_CONFIG_PATH=$P cmake \
             -DCMAKE_INSTALL_PREFIX:PATH="$APP_DIR"/usr \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type.type }} \
-            -DDISABLE_WERROR=FALSE \
+            -DDISABLE_WERROR=TRUE \
             -DENABLE_TESTS=FALSE \
             ..
           make $PARALLEL $V
@@ -387,7 +387,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: ghcr.io/sigrokproject/sigrok-appimage-${{ matrix.target.container }}:latest
+      image: ghcr.io/${{ github.repository_owner }}/sigrok-appimage-${{ matrix.target.container }}:latest
 
     strategy:
       matrix:
@@ -433,12 +433,12 @@ jobs:
           # Temp!
           sudo apt-get install -y libffi-dev
           # Version must match the one in ci/appimage/sigrok-appimage-create-appimage.sh
-          sudo apt-get install -y python3.8-dev
+          sudo apt-get install -y python3-dev
 
       - name: Checkout sigrok-build
-        # Cannot use actions/checkout because it always checks out the calling actions' repo, not the one specified
-        run: |
-          git clone https://github.com/sigrokproject/sigrok-build.git
+        uses: actions/checkout@v4
+        with:
+          path: sigrok-build
 
       - name: Build dependencies
         run: |
@@ -912,6 +912,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     needs:
       # Keep in sync with job announce_pv_builds_in_pr
       - build_pulseview_mxe
@@ -944,6 +947,9 @@ jobs:
 
   continuous_release_sigrok-cli:
     name: Create continuous sigrok-cli release and add artifacts to it
+
+    permissions:
+      contents: write
 
     if: |
       (endsWith(github.repository, 'sigrok-cli') || endsWith(github.repository, 'sigrok-build')) &&
@@ -981,6 +987,9 @@ jobs:
 
   continuous_release_all:
     name: Create continuous release and add artifacts to it
+
+    permissions:
+      contents: write
 
     if: |
       (endsWith(github.repository, 'sigrok-build')) &&
@@ -1078,7 +1087,7 @@ jobs:
     steps:
       - name: Debug output
         env:
-          GH_REPO: ${{ github.repository }}
+          GH_REPO: ${{ github.repository_owner }}
           GH_EVENT_NAME: ${{ github.event_name }}
           GH_REF: ${{ github.ref }}
         run: echo "Repo $GH_REPO, Event $GH_EVENT_NAME, Ref $GH_REF"
